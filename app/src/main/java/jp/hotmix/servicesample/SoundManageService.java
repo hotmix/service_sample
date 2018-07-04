@@ -1,15 +1,22 @@
 package jp.hotmix.servicesample;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import java.io.IOException;
 
 public class SoundManageService extends Service {
     private MediaPlayer _player;
+    private static final String TAG = "SoundManageService";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -20,6 +27,13 @@ public class SoundManageService extends Service {
     @Override
     public void onCreate() {
         _player = new MediaPlayer();
+        String id = "soundmanagerservice_notification_channel";
+        String name = getString(R.string.notification_channel_name);
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel(id, name, importance);
+
+        NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.createNotificationChannel(channel);
     }
 
     @Override
@@ -42,6 +56,7 @@ public class SoundManageService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.i(TAG, "onDestroy: called");
         if (_player.isPlaying()){
             _player.stop();
         }
@@ -54,6 +69,7 @@ public class SoundManageService extends Service {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
+            Log.i(TAG, "onPrepared: called");
             mp.start();
         }
     }
@@ -62,6 +78,19 @@ public class SoundManageService extends Service {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
+            Log.i(TAG, "onCompletion: called");
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    SoundManageService.this, "soundmanagerservice_notification_channel"
+            );
+            builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+            builder.setContentTitle(getString(R.string.msg_notification_title_finish));
+            builder.setContentText(getString(R.string.msg_notification_text_finish));
+
+            Notification notification = builder.build();
+
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.notify(0, notification);
+            Log.i(TAG, "onCompletion: notification notify()");
             stopSelf();
         }
     }
