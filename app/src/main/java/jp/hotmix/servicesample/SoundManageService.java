@@ -3,6 +3,7 @@ package jp.hotmix.servicesample;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -70,6 +71,24 @@ public class SoundManageService extends Service {
         @Override
         public void onPrepared(MediaPlayer mp) {
             Log.i(TAG, "onPrepared: called");
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    SoundManageService.this, "soundmanagerservice_notification_channel"
+            );
+            builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+            builder.setContentTitle(getString(R.string.msg_notification_title_start));
+            builder.setContentText(getString(R.string.msg_notification_text_start));
+
+            Intent intent = new Intent(SoundManageService.this, SoundStartActivity.class);
+            intent.putExtra("fromNotification", true);
+
+            PendingIntent stopServiceIntent = PendingIntent.getActivity(SoundManageService.this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+            builder.setContentIntent(stopServiceIntent);
+            builder.setAutoCancel(true);
+
+            Notification notification = builder.build();
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+
+            manager.notify(1, notification);
             mp.start();
         }
     }
